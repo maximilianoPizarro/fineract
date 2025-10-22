@@ -1,0 +1,13 @@
+apiVersion: v2
+description: 'Apache Fineract: A Platform for Microfinance'
+home: https://github.com/apache/fineract
+icon: https://fineract.apache.org/images/apache-fineract-logo.png
+keywords:
+- microfinance
+maintainers:
+- email: yann.jouanique@gmail.com
+  name: Yann-J
+name: fineract
+sources:
+- https://github.com/one-acre-fund/oaf-public-charts/tree/main/charts/fineract
+version: 0.1.0

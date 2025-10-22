@@ -1,0 +1,186 @@
+kind: Secret
+apiVersion: v1
+metadata:
+  name: fineract-mysql-credentials
+  labels:
+    app: fineract-mysql
+    app.kubernetes.io/name: fineract-mysql
+    app.kubernetes.io/part-of: fineract
+data:
+  database-name: ZmluZXJhY3RfdGVuYW50cw== # Base64 para: fineract_tenants
+  database-password: ZmluZXJhY3Q=
+  database-root-password: ZmluZXJhY3Q=
+  database-user: ZmluZXJhY3Q=
+  database-default-name: ZmluZXJhY3RfZGVmYXVsdA== # Base64 para: fineract_default
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fineract-mysql
+  labels:
+    app: fineract-mysql
+    app.kubernetes.io/name: fineract-mysql
+    app.kubernetes.io/part-of: fineract
+    app.openshift.io/runtime: mariadb
+spec:
+  strategy:
+    type: Recreate
+    recreateParams:
+      timeoutSeconds: 600
+    resources: {}
+    activeDeadlineSeconds: 21600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: fineract-mysql
+  template:
+    metadata:
+      labels:
+        app: fineract-mysql
+        app.openshift.io/runtime: mariadb
+        deployment: fineract-mysql
+    spec:
+      volumes:
+        - name: mysql-data
+          emptyDir: {} # ⬅️ Volumen efímero en una sola línea.
+        - name: default-db-name-secret
+          secret:
+            secretName: fineract-mysql-credentials
+            items:
+              - key: database-default-name
+                path: database-default-name
+        - name: db-user-secret
+          secret:
+            secretName: fineract-mysql-credentials
+            items:
+              - key: database-user
+                path: database-user
+        - name: db-pass-secret
+          secret:
+            secretName: fineract-mysql-credentials
+            items:
+              - key: database-password
+                path: database-password
+      initContainers:
+        # CONTENEDOR PARA CREAR LA SEGUNDA DB (fineract_default)
+        - name: create-default-db
+          image: registry.redhat.io/rhel8/mariadb-103
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Esperando que MySQL esté listo..."
+              while ! MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqladmin -h fineract-mysql -u root ping; do
+                sleep 5
+              done
+              echo "MySQL listo. Creando base de datos secundaria."
+              
+              # Lee credenciales y ejecuta SQL para crear DB y otorgar permisos
+              DEFAULT_DB=$(cat /etc/secrets/default-db/database-default-name)
+              DB_USER=$(cat /etc/secrets/db-user/database-user)
+              DB_PASS=$(cat /etc/secrets/db-pass/database-password)
+
+              MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -u root -h fineract-mysql -e "
+                CREATE DATABASE IF NOT EXISTS \`$DEFAULT_DB\`;
+                GRANT ALL PRIVILEGES ON \`$DEFAULT_DB\`.* TO '$DB_USER'@'%' IDENTIFIED BY '$DB_PASS';
+                FLUSH PRIVILEGES;
+              "
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fineract-mysql-credentials
+                  key: database-root-password
+          volumeMounts:
+            - name: default-db-name-secret
+              mountPath: /etc/secrets/default-db
+              readOnly: true
+            - name: db-user-secret
+              mountPath: /etc/secrets/db-user
+              readOnly: true
+            - name: db-pass-secret
+              mountPath: /etc/secrets/db-pass
+              readOnly: true
+        
+      containers:
+        - resources:
+            limits:
+              memory: 512Mi
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - '-i'
+                - '-c'
+                - MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqladmin -h 127.0.0.1 -u root ping
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          name: fineract-mysql
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - '-i'
+                - '-c'
+                - MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysqladmin -h 127.0.0.1 -u root ping
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          env:
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: fineract-mysql-credentials
+                  key: database-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fineract-mysql-credentials
+                  key: database-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fineract-mysql-credentials
+                  key: database-root-password
+            - name: MYSQL_DATABASE # SOLO fineract_tenants para pasar validación
+              valueFrom:
+                secretKeyRef:
+                  name: fineract-mysql-credentials
+                  key: database-name
+          ports:
+            - containerPort: 3306
+              protocol: TCP
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql/data 
+          image: >-
+            registry.redhat.io/rhel8/mariadb-103
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: fineract-mysql
+    app.kubernetes.io/name: fineract-mysql
+    app.kubernetes.io/part-of: fineract
+  name: fineract-mysql # Service name remains the single point of entry
+spec:
+  ports:
+    - name: 3306-tcp
+      protocol: TCP
+      port: 3306
+      targetPort: 3306
+  selector:
+    app: fineract-mysql
+    deployment: fineract-mysql
+---
