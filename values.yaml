@@ -24,7 +24,7 @@ fineractServer:
     # -- Fineract Docker image name
     name: apache/fineract
     # -- Fineract Docker image tag
-    tag: latest
+    tag: 1.12.1
   # -- Dictionary of key/value pairs to pass as environment variables to the backend pods
   # They will be evaluated as Helm templates
   # @default -- See `values.yaml`
@@ -34,13 +34,14 @@ fineractServer:
     SUB_PROTOCOL: mysql
     fineract_tenants_driver: com.mysql.cj.jdbc.Driver
     FINERACT_DEFAULT_TENANTDB_PORT: "3306"
+    LOG_OUTPUT_TYPE: console_plain
   # -- Same as `extraEnv` but passed as secrets
   extraSecretEnv: {}
   # -- Resource settings for Backend pods
   resources:
     limits:
-      cpu: "1000m"
-      memory: "1Gi"
+      cpu: "2000m"
+      memory: "3Gi"
   # -- ServiceAccount settings
   serviceAccount:
     ## Specifies whether a ServiceAccount should be created

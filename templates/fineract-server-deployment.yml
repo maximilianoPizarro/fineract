@@ -52,7 +52,7 @@ spec:
             - name: FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME
               value: com.mysql.cj.jdbc.Driver
             - name: FINERACT_HIKARI_JDBC_URL
-              value: jdbc:mysql://fineract-tenants:3306/fineract_tenants?serverTimezone=UTC&useSSL=false
+              value: jdbc:mysql://fineract-tenants:3306/fineract_tenants?serverTimezone=UTC&useSSL=false&autoReconnect=true&sessionVariables=FOREIGN_KEY_CHECKS=0&characterEncoding=UTF-8&useUnicode=true&zeroDateTimeBehavior=CONVERT_TO_NULL
             - name: FINERACT_HIKARI_USERNAME
               value: {{ include "mysql_user" . }}
             - name: FINERACT_HIKARI_PASSWORD
@@ -74,17 +74,24 @@ spec:
             - name: FINERACT_DEFAULT_TENANTDB_TIMEZONE
               value: UTC
             - name: FINERACT_DEFAULT_TENANTDB_CONN_PARAMS
-              value: serverTimezone=UTC&useSSL=false&autoReconnect=true&sessionVariables=FOREIGN_KEY_CHECKS=0
-
+              value: serverTimezone=UTC&useSSL=false&autoReconnect=true&sessionVariables=FOREIGN_KEY_CHECKS=0&characterEncoding=UTF-8&useUnicode=true&zeroDateTimeBehavior=CONVERT_TO_NULL
             # === Variables de Compatibilidad (Apuntan a los Hosts correctos) ===
             - name: fineract_tenants_url
-              value: jdbc:mysql://fineract-tenants:3306/fineract_tenants?serverTimezone=UTC&useSSL=false
+              value: jdbc:mysql://fineract-tenants:3306/fineract_tenants?serverTimezone=UTC&useSSL=false&autoReconnect=true&sessionVariables=FOREIGN_KEY_CHECKS=0&characterEncoding=UTF-8&useUnicode=true&zeroDateTimeBehavior=CONVERT_TO_NULL
             - name: fineract_tenants_uid
               value: {{ include "mysql_user" . }}
             - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
               value: fineract-default # <-- Host de la BD de Negocio (Servidor 2)
             - name: FINERACT_DEFAULT_TENANTDB_UID
               value: {{ include "mysql_user" . }}
+            - name: FINERACT_SERVER_SSL_ENABLED
+              value: "true"
+            - name: SPRING_LIQUIBASE_DROP_FIRST_DEFAULT_TENANT
+              value: "true"
+            - name: SERVER_PORT
+              value: "8080"
+            - name: JAVA_OPTS
+              value: "-Xms1024m -Xmx2048m"              
             {{- if .Values.fineractServer.extraEnv }}
             {{- range $key, $value := .Values.fineractServer.extraEnv }}
             - name: {{ $key | quote}}

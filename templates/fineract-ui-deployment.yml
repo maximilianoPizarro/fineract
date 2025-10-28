@@ -38,6 +38,7 @@ spec:
         tier: ui
         instance: {{ .Release.Name }}
     spec:
+      serviceAccountName: fineractserver-sa    
       containers:
         - name: fineract-ui
           image: "{{ .Values.fineractUI.image.name }}:{{ .Values.fineractUI.image.tag }}"
