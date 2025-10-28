@@ -48,12 +48,41 @@ spec:
             - secretRef:
                 name: {{ .Release.Name | quote }}
           env:
+            # === Configuración de la Base de Datos de Plataforma (fineract_tenants / Servidor 1) ===
+            - name: FINERACT_HIKARI_DRIVER_SOURCE_CLASS_NAME
+              value: com.mysql.cj.jdbc.Driver
+            - name: FINERACT_HIKARI_JDBC_URL
+              value: jdbc:mysql://fineract-tenants:3306/fineract_tenants?serverTimezone=UTC&useSSL=false
+            - name: FINERACT_HIKARI_USERNAME
+              value: {{ include "mysql_user" . }}
+            - name: FINERACT_HIKARI_PASSWORD
+              value: {{ include "mysql_password" . }}
+              
+            # === Configuración del Inquilino por Defecto (fineract_default / Servidor 2) ===
+            - name: FINERACT_DEFAULT_TENANTDB_IDENTIFIER
+              value: default
             - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
-              value: {{ include "mysql_host" . }}
+              value: fineract-default # <-- Host de la BD de Negocio (Servidor 2)
+            - name: FINERACT_DEFAULT_TENANTDB_PORT
+              value: "3306"
+            - name: FINERACT_DEFAULT_TENANTDB_NAME
+              value: fineract_default
+            - name: FINERACT_DEFAULT_TENANTDB_UID
+              value: {{ include "mysql_user" . }}
+            - name: FINERACT_DEFAULT_TENANTDB_PWD
+              value: {{ include "mysql_password" . }}
+            - name: FINERACT_DEFAULT_TENANTDB_TIMEZONE
+              value: UTC
+            - name: FINERACT_DEFAULT_TENANTDB_CONN_PARAMS
+              value: serverTimezone=UTC&useSSL=false&autoReconnect=true&sessionVariables=FOREIGN_KEY_CHECKS=0
+
+            # === Variables de Compatibilidad (Apuntan a los Hosts correctos) ===
             - name: fineract_tenants_url
-              value: {{ include "mysql_url" . }}
+              value: jdbc:mysql://fineract-tenants:3306/fineract_tenants?serverTimezone=UTC&useSSL=false
             - name: fineract_tenants_uid
               value: {{ include "mysql_user" . }}
+            - name: FINERACT_DEFAULT_TENANTDB_HOSTNAME
+              value: fineract-default # <-- Host de la BD de Negocio (Servidor 2)
             - name: FINERACT_DEFAULT_TENANTDB_UID
               value: {{ include "mysql_user" . }}
             {{- if .Values.fineractServer.extraEnv }}

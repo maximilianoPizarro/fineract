@@ -1,55 +1,66 @@
-kind: Secret
 apiVersion: v1
+kind: Secret
 metadata:
-  name: fineract-tenants
+  name: fineract-default
   labels:
-    app: fineract-tenants
-    app.kubernetes.io/name: fineract-tenants
-    app.kubernetes.io/part-of: fineract
+    app: fineract-default
+    app.kubernetes.io/name: fineract-default
+    app.kubernetes.io/part-of: fineract-tenants
 data:
-  database-name: ZmluZXJhY3RfdGVuYW50cw==
-  database-password: ZmluZXJhY3Q=
-  database-root-password: ZmluZXJhY3Q=
-  database-user: ZmluZXJhY3Q=
-  fineract_default: ZmluZXJhY3RfdGVuYW50cw==
+  # Base de datos de negocio (fineract_default)
+  database-name: ZmluZXJhY3RfZGVmYXVsdA==
+  database-password: ZmluZXJhY3Q=         
+  database-root-password: ZmluZXJhY3Q=    
+  database-user: ZmluZXJhY3Q=             
 type: Opaque
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: fineract-default-data
+  labels:
+    app: fineract-default
+    app.kubernetes.io/instance: fineract-default
+    app.kubernetes.io/name: fineract-default
+    app.kubernetes.io/part-of: fineract-tenants
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: fineract-tenants
+  name: fineract-default
   labels:
-    app: fineract-tenants
-    app.kubernetes.io/component: fineract-tenants
-    app.kubernetes.io/instance: fineract-tenants
-    app.kubernetes.io/name: fineract-tenants
+    app: fineract-default
+    app.kubernetes.io/component: fineract-default
+    app.kubernetes.io/instance: fineract-default
+    app.kubernetes.io/name: fineract-default
     app.kubernetes.io/part-of: fineract-tenants
     app.openshift.io/runtime: mariadb
 spec:
   strategy:
     type: Recreate
-    recreateParams:
-      timeoutSeconds: 600
-    resources: {}
-    activeDeadlineSeconds: 21600
   replicas: 1
   revisionHistoryLimit: 10
-  test: false
   selector:
     matchLabels:
-      app: fineract-tenants
+      app: fineract-default
   template:
     metadata:
-      creationTimestamp: null
       labels:
-        app: fineract-tenants
+        app: fineract-default
         app.openshift.io/runtime: mariadb
-        deployment: fineract-tenants
+        deployment: fineract-default
     spec:
       volumes:
-        - name: fineract-tenants-data
+        - name: fineract-default-data
           persistentVolumeClaim:
-            claimName: fineract-tenants-data
+            claimName: fineract-default-data
       containers:
         - resources:
             limits:
@@ -67,7 +78,7 @@ spec:
             successThreshold: 1
             failureThreshold: 3
           terminationMessagePath: /dev/termination-log
-          name: fineract-tenants
+          name: fineract-default
           livenessProbe:
             exec:
               command:
@@ -81,36 +92,38 @@ spec:
             successThreshold: 1
             failureThreshold: 3
           env:
+            # Apuntando al NUEVO Secret 'fineract-default'
             - name: MYSQL_USER
               valueFrom:
                 secretKeyRef:
-                  name: fineract-tenants
+                  name: fineract-default
                   key: database-user
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: fineract-tenants
+                  name: fineract-default
                   key: database-password
             - name: MYSQL_ROOT_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: fineract-tenants
+                  name: fineract-default
                   key: database-root-password
             - name: MYSQL_DATABASE
               valueFrom:
                 secretKeyRef:
-                  name: fineract-tenants
+                  name: fineract-default
                   key: database-name
+            - name: MARIADB_ALLOW_EMPTY_ROOT_PASSWORD
+              value: "false"
           ports:
             - containerPort: 3306
               protocol: TCP
           imagePullPolicy: IfNotPresent
           volumeMounts:
-            - name: fineract-tenants-data
+            - name: fineract-default-data
               mountPath: /var/lib/mysql/data
           terminationMessagePolicy: File
-          image: >-
-            registry.redhat.io/rhel8/mariadb-103
+          image: registry.redhat.io/rhel8/mariadb-103
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
@@ -121,12 +134,12 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: fineract-tenants
-    app.kubernetes.io/component: fineract-tenants
-    app.kubernetes.io/instance: fineract-tenants
-    app.kubernetes.io/name: fineract-tenants
+    app: fineract-default
+    app.kubernetes.io/component: fineract-default
+    app.kubernetes.io/instance: fineract-default
+    app.kubernetes.io/name: fineract-default
     app.kubernetes.io/part-of: fineract-tenants
-  name: fineract-tenants
+  name: fineract-default
 spec:
   ports:
     - name: 3306-tcp
@@ -134,22 +147,5 @@ spec:
       port: 3306
       targetPort: 3306
   selector:
-    app: fineract-tenants
-    deployment: fineract-tenants
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: fineract-tenants-data
-  labels:
-    app: fineract-tenants
-    app.kubernetes.io/instance: fineract-tenants
-    app.kubernetes.io/name: fineract-tenants
-    app.kubernetes.io/part-of: fineract-tenants
-spec:
-  accessModes:
-    - ReadWriteOnce
-  volumeMode: Filesystem
-  resources:
-    requests:
-      storage: 1Gi
+    app: fineract-default
+    deployment: fineract-default

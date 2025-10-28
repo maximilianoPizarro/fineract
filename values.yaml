@@ -91,16 +91,18 @@ fineractUI:
 global:
   db:
     # -- DB name for tenants db
-    tenantsDb: fineract-default
+    tenantsDb: fineract_tenants
+    # -- DB name for defaults db
+    defaultDb: fineract_default
 
 # -- MySQL settings - see https://artifacthub.io/packages/helm/bitnami/mysql
 # @default -- see `values.yaml`
 mysql:
   # -- Install MySQL?
-  enabled: true
+  enabled: false
   auth:
     # -- Please change these...
-    rootPassword: 'fineract'
+    rootPassword: 'fineract_tenants'
     # -- Please change these...
     password: 'fineract'
     # -- Fineract db user
