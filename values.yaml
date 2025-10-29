@@ -40,8 +40,8 @@ fineractServer:
   # -- Resource settings for Backend pods
   resources:
     limits:
-      cpu: "2000m"
-      memory: "3Gi"
+      cpu: "4000m"
+      memory: "16Gi"
   # -- ServiceAccount settings
   serviceAccount:
     ## Specifies whether a ServiceAccount should be created

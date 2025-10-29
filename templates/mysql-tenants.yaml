@@ -50,6 +50,7 @@ spec:
         - name: fineract-tenants-data
           persistentVolumeClaim:
             claimName: fineract-tenants-data
+      serviceAccountName: fineractserver-sa            
       containers:
         - resources:
             limits:
@@ -60,7 +61,7 @@ spec:
                 - /bin/sh
                 - '-i'
                 - '-c'
-                - MYSQL_PWD="$MYSQL_PASSWORD" mysqladmin -u $MYSQL_USER ping
+                - MYSQL_PWD="$MYSQL_PASSWORD" mariadb-admin ping -u $MYSQL_USER
             initialDelaySeconds: 5
             timeoutSeconds: 1
             periodSeconds: 10
@@ -74,7 +75,7 @@ spec:
                 - /bin/sh
                 - '-i'
                 - '-c'
-                - MYSQL_PWD="$MYSQL_PASSWORD" mysqladmin -u $MYSQL_USER ping
+                - MYSQL_PWD="$MYSQL_PASSWORD" mariadb-admin ping -u $MYSQL_USER
             initialDelaySeconds: 30
             timeoutSeconds: 1
             periodSeconds: 10
@@ -110,7 +111,7 @@ spec:
               mountPath: /var/lib/mysql/data
           terminationMessagePolicy: File
           image: >-
-            registry.redhat.io/rhel8/mariadb-103
+            mariadb:11.4
       restartPolicy: Always
       terminationGracePeriodSeconds: 30
       dnsPolicy: ClusterFirst
