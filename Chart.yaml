@@ -5,9 +5,9 @@ icon: https://fineract.apache.org/images/apache-fineract-logo.png
 keywords:
 - microfinance
 maintainers:
-- email: yann.jouanique@gmail.com
-  name: Yann-J
+- email: maximiliano.pizarro.5@gmail.com
+  name: Maximiliano Pizarro
 name: fineract
 sources:
-- https://github.com/one-acre-fund/oaf-public-charts/tree/main/charts/fineract
+- https://github.com/maximilianoPizarro/fineract
 version: 0.1.0

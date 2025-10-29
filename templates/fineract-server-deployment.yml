@@ -23,6 +23,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: fineract
+    app.openshift.io/connects-to: '[{"apiVersion":"apps/v1","kind":"Deployment","name":"fineract-default"},{"apiVersion":"apps/v1","kind":"Deployment","name":"fineract-tenants"}]'
     tier: backend
 spec:
   replicas: {{ .Values.replicas }}
@@ -102,6 +103,9 @@ spec:
           ports:
             - containerPort: 8080
               name: http
+          volumeMounts:
+            - name: fineract-storage
+              mountPath: /.fineract/              
           readinessProbe:
             httpGet:
               path: /fineract-provider/actuator/health/readiness
@@ -116,3 +120,7 @@ spec:
             timeoutSeconds: 10
           resources:
             {{- .Values.fineractServer.resources | toYaml | nindent 12 }}
+      volumes:
+        - name: fineract-storage
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-backend-pvc

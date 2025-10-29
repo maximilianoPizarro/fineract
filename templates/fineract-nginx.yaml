@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fineract-nginx-proxy-conf
+data:
+  default.conf: |
+    server {
+        listen 3000;
+        server_name _;
+        
+        access_log /dev/stdout;
+        error_log /dev/stderr;
+
+        location /fineract-provider/ {
+            proxy_pass http://fineract-backend:8080/fineract-provider/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location / {
+            proxy_pass http://fineract-ui:80;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fineract-nginx-proxy
+  labels:
+    app: fineract-proxy
+    app.openshift.io/runtime: nginx
+    app.openshift.io/connects-to: '[{"apiVersion":"apps/v1","kind":"Deployment","name":"fineract-ui"}]'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fineract-proxy
+  template:
+    metadata:
+      labels:
+        app: fineract-proxy
+    spec:
+      serviceAccountName: fineract-sa
+      volumes:
+        - name: nginx-config-volume
+          configMap:
+            name: fineract-nginx-proxy-conf
+      containers:
+        - name: nginx-proxy
+          image: nginx:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http-proxy
+          volumeMounts:
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/conf.d/default.conf
+              subPath: default.conf
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fineract-nginx-service
+  labels:
+    app: fineract-proxy
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
