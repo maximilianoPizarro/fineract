@@ -95,7 +95,9 @@ global:
     tenantsDb: fineract_tenants
     # -- DB name for defaults db
     defaultDb: fineract_default
-
+route:
+  enabled: true  
+  host: fineract.openshiftapps.com
 # -- MySQL settings - see https://artifacthub.io/packages/helm/bitnami/mysql
 # @default -- see `values.yaml`
 mysql:

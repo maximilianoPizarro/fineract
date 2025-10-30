@@ -23,8 +23,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     app: fineract
-    app.openshift.io/connects-to: '[{"apiVersion":"apps/v1","kind":"Deployment","name":"fineract-backend"}]'
     tier: ui
+  annotations:
+    app.openshift.io/connects-to: '[{"apiVersion":"apps/v1","kind":"Deployment","name":"fineract-backend"}]'    
 spec:
   replicas: {{ .Values.fineractUI.replicas }}
   selector:
