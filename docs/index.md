@@ -18,12 +18,12 @@ Apache Fineract is an open source microfinance platform that provides a robust a
 
 ### TL;DR
 
-Apache Fineract is an open-source platform for microfinance that provides core banking functionality for lending, savings and client management. This deployment architecture uses two separate MariaDB instances (one for the default/global database and one for tenant data), with an NGINX server acting as the application gateway/reverse proxy. Default admin credentials shipped in this chart are: user `mifos` and password `password`.
+Apache Fineract is an open-source platform for microfinance that provides core banking functionality for lending, savings and client management. This deployment architecture uses two separate MariaDB instances (one for the default/global database and one for tenant data), with an NGINX server acting as the application gateway/reverse proxy. Default admin credentials shipped in this chart are: user `mifos` and password `password`. This deployment requires at least 4 vCPU for the Fineract backend (for Liquibase migrations) and 16 GiB of RAM for the entire architecture.
 
 # Architecture
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/maximilianoPizarro/fineract/refs/heads/main/docs/fineract-openshift.png" width="900"/>
+  <img src="https://maximilianopizarro.github.io/fineract/fineract-openshift.png" width="900"/>
 </div>
 
 ## Values
@@ -49,13 +49,11 @@ Apache Fineract is an open-source platform for microfinance that provides core b
 | mysql.primary.auth.username | string | `"fineract"` | DB user for primary DB |
 | mysql.primary.auth.password | string | `""` | Please change these... |
 | mysql.primary.auth.rootPassword | string | `""` | Please change these... |
-| mysql.primary.image.tag | string | `"5.7"` | _Warning_: Fineract db driver doesn't support MySQL 8 |
 | mysql.tenants | object | see `values.yaml` | Separate MariaDB instance for tenant databases |
 | mysql.tenants.enabled | bool | `true` | Install tenants MariaDB? |
 | mysql.tenants.auth.username | string | `"fineract_tenant"` | DB user for tenants DB |
 | mysql.tenants.auth.password | string | `""` | Please change these... |
 | mysql.tenants.auth.rootPassword | string | `""` | Please change these... |
-| mysql.tenants.image.tag | string | `"5.7"` | _Warning_: Fineract db driver doesn't support MySQL 8 |
 | mysql.initdbScripts | object | see `values.yaml` | Dictionary of init scripts to run on initial MySQL setup __WARNING__! These db init scripts will only be executed on a brand new, uninitialized instance! Further changes will be ignored after the first init, unless you wipe the underlying PV/PVC volumes |
 | nginx | object | see `values.yaml` | NGINX reverse proxy / ingress gateway configuration |
 | nginx.enabled | bool | `false` | Deploy NGINX gateway? |

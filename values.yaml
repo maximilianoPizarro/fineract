@@ -41,7 +41,7 @@ fineractServer:
   resources:
     limits:
       cpu: "4000m"
-      memory: "16Gi"
+      memory: "4Gi"
   # -- ServiceAccount settings
   serviceAccount:
     ## Specifies whether a ServiceAccount should be created

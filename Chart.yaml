@@ -13,7 +13,7 @@ name: fineract
 type: application
 sources:
 - https://github.com/maximilianoPizarro/fineract
-version: 0.1.0
+version: 0.1.1
 annotations:
   charts.openshift.io/name: Fineract
   charts.openshift.io/provider-display-name: maximilianoPizarro
